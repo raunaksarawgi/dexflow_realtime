@@ -7,38 +7,71 @@ export class CacheService {
   private isConnected: boolean = false;
 
   constructor() {
-    this.client = new Redis({
-      host: config.redis.host,
-      port: config.redis.port,
-      password: config.redis.password,
-      retryStrategy: (times: number) => {
-        const delay = Math.min(times * 50, 2000);
-        return delay;
-      },
-      maxRetriesPerRequest: 3,
-    });
+    // Use REDIS_URL if available (for cloud services like Upstash, Redis Cloud)
+    // Otherwise fall back to individual host/port config (for local development)
+    const redisUrl = process.env.REDIS_URL;
+    
+    if (redisUrl && (redisUrl.startsWith('redis://') || redisUrl.startsWith('rediss://'))) {
+      // Use connection URL (Upstash, Redis Cloud, Railway, etc.)
+      this.client = new Redis(redisUrl, {
+        retryStrategy: (times: number) => {
+          const delay = Math.min(times * 50, 2000);
+          return delay;
+        },
+        maxRetriesPerRequest: 3,
+        // For TLS connections (rediss://)
+        tls: redisUrl.startsWith('rediss://') ? {} : undefined,
+      });
+    } else {
+      // Use individual config (local development)
+      this.client = new Redis({
+        host: config.redis.host,
+        port: config.redis.port,
+        password: config.redis.password,
+        retryStrategy: (times: number) => {
+          const delay = Math.min(times * 50, 2000);
+          return delay;
+        },
+        maxRetriesPerRequest: 3,
+      });
+    }
 
     this.setupEventHandlers();
   }
 
   private setupEventHandlers(): void {
     this.client.on('connect', () => {
-      Logger.info('Redis connected successfully');
+      Logger.info('Redis connected successfully', {
+        host: config.redis.host,
+        port: config.redis.port,
+      });
       this.isConnected = true;
     });
 
     this.client.on('error', (error) => {
-      Logger.error('Redis connection error', { error: error.message });
+      const errorMessage = error.message || 'Unknown Redis error';
+      Logger.error('Redis connection error', { 
+        error: errorMessage,
+        host: config.redis.host,
+        port: config.redis.port,
+        hint: 'Check REDIS_URL environment variable. For production, use a Redis cloud service like Upstash (https://upstash.com) or Redis Cloud. See DEPLOYMENT.md for setup guide.',
+      });
       this.isConnected = false;
     });
 
     this.client.on('close', () => {
-      Logger.warn('Redis connection closed');
+      Logger.warn('Redis connection closed', {
+        host: config.redis.host,
+        port: config.redis.port,
+      });
       this.isConnected = false;
     });
 
     this.client.on('reconnecting', () => {
-      Logger.info('Redis reconnecting...');
+      Logger.info('Redis reconnecting...', {
+        host: config.redis.host,
+        port: config.redis.port,
+      });
     });
   }
 

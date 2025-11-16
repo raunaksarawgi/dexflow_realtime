@@ -484,38 +484,43 @@ Expected results:
 
 ## 🚀 Deployment
 
-### Using Railway (Recommended)
+**⚠️ IMPORTANT**: Redis is **mandatory** for this project. See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete setup guide.
 
-1. **Connect your GitHub repo** to Railway
-2. **Add Redis plugin** in Railway dashboard
-3. **Set environment variables**:
-   ```
-   NODE_ENV=production
-   PORT=3000
-   ```
-4. **Deploy** - Railway auto-detects and builds your app
+### Quick Start (Render + Upstash Redis)
 
-### Using Render
+1. **Set up Redis** (5 minutes)
+   - Create free account at https://upstash.com/
+   - Create Redis database
+   - Copy connection URL (starts with `rediss://`)
 
-1. **Create a new Web Service**
-2. **Connect GitHub repo**
-3. **Configure**:
-   - Build Command: `npm run build`
-   - Start Command: `npm start`
-4. **Add Redis** from Upstash or Redis Cloud
-5. **Set environment variables**
+2. **Deploy to Render**
+   - Create Web Service from your GitHub repo
+   - Add environment variable:
+     ```
+     REDIS_URL=rediss://default:PASSWORD@endpoint.upstash.io:6379
+     ```
+   - Deploy automatically builds and starts
 
-### Using Docker
+3. **Verify**
+   - Check logs for: `[INFO] Redis connected successfully`
+   - Test: `curl https://your-app.onrender.com/api/health`
 
-```bash
-# Build image
-docker build -t dex-aggregator .
+### Alternative: Railway (Easiest Redis Setup)
 
-# Run container
-docker run -p 3000:3000 \
-  -e REDIS_URL=redis://your-redis-url \
-  dex-aggregator
-```
+1. **Deploy to Railway**
+   - Connect GitHub repo
+   - Add Redis plugin (automatic `REDIS_URL` setup)
+   - Deploy
+
+### Full Deployment Guide
+
+See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for:
+- ✅ Step-by-step Redis cloud setup (Upstash/Redis Cloud)
+- ✅ Complete Render deployment instructions
+- ✅ Railway deployment guide
+- ✅ Troubleshooting Redis connection issues
+- ✅ Production environment variables
+- ✅ Testing deployed app
 
 ## 🔒 Environment Variables
 

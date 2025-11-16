@@ -116,10 +116,44 @@ class Server {
 
   async start(): Promise<void> {
     try {
+      // Log Redis configuration (without password)
+      const redisUrl = process.env.REDIS_URL;
+      let redisInfo: string;
+      
+      if (redisUrl) {
+        // Hide password in URL for logging
+        redisInfo = redisUrl.replace(/:([^:@]+)@/, ':****@');
+      } else {
+        redisInfo = `${config.redis.host}:${config.redis.port}`;
+      }
+      
+      Logger.info('Starting server with Redis configuration', { 
+        redis: redisInfo,
+        nodeEnv: config.server.nodeEnv,
+        redisUrlProvided: !!redisUrl,
+      });
+
+      // Validate Redis URL format if provided
+      if (redisUrl && !redisUrl.startsWith('redis://') && !redisUrl.startsWith('rediss://')) {
+        Logger.error('Invalid REDIS_URL format', {
+          format: 'Must start with redis:// or rediss://',
+          example: 'rediss://default:password@host.upstash.io:6379',
+          provided: redisUrl.substring(0, 20) + '...',
+        });
+      }
+
       // Check Redis connection
       const redisConnected = await this.checkRedisConnection();
       if (!redisConnected) {
-        Logger.warn('Starting without Redis - caching will be disabled');
+        Logger.error('❌ REDIS CONNECTION FAILED - This is a CRITICAL issue!');
+        Logger.error('Redis is MANDATORY for this project. App functionality will be degraded.');
+        Logger.error('Setup instructions:');
+        Logger.error('1. Go to https://upstash.com/ and create a free Redis database');
+        Logger.error('2. Copy the connection URL (starts with rediss://)');
+        Logger.error('3. In Render dashboard → Environment → Add variable:');
+        Logger.error('   REDIS_URL=rediss://default:YOUR_PASSWORD@YOUR_ENDPOINT.upstash.io:6379');
+        Logger.error('4. Save and redeploy');
+        Logger.error('Full guide: See DEPLOYMENT.md in the repository');
       }
 
       // Initialize WebSocket service
