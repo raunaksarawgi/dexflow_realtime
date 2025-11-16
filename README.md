@@ -2,6 +2,9 @@
 
 A real-time cryptocurrency token data aggregation service that fetches meme coin data from multiple DEX (Decentralized Exchange) APIs, implements efficient caching with Redis, and provides live updates via WebSockets.
 
+Deployed here-
+https://dexflow-realtime.onrender.com
+
 ## 📋 Features
 
 - ✅ **Multi-Source Aggregation**: Fetches data from DexScreener and Jupiter APIs
@@ -482,35 +485,7 @@ Expected results:
 - **Cursor pagination**: Memory-efficient pagination that doesn't re-scan entire dataset
 - **Selective updates**: Only broadcasts tokens that actually changed
 
-## 🚀 Deployment
-
-**⚠️ IMPORTANT**: Redis is **mandatory** for this project. See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete setup guide.
-
-### Quick Start (Render + Upstash Redis)
-
-1. **Set up Redis** (5 minutes)
-   - Create free account at https://upstash.com/
-   - Create Redis database
-   - Copy connection URL (starts with `rediss://`)
-
-2. **Deploy to Render**
-   - Create Web Service from your GitHub repo
-   - Add environment variable:
-     ```
-     REDIS_URL=rediss://default:PASSWORD@endpoint.upstash.io:6379
-     ```
-   - Deploy automatically builds and starts
-
-3. **Verify**
-   - Check logs for: `[INFO] Redis connected successfully`
-   - Test: `curl https://your-app.onrender.com/api/health`
-
-### Alternative: Railway (Easiest Redis Setup)
-
-1. **Deploy to Railway**
-   - Connect GitHub repo
-   - Add Redis plugin (automatic `REDIS_URL` setup)
-   - Deploy
+## Deployment
 
 ### Full Deployment Guide
 
@@ -535,43 +510,7 @@ See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for:
 | `WS_UPDATE_INTERVAL` | WebSocket update interval (ms) | 30000 |
 | `CORS_ORIGIN` | CORS origin | * |
 
-## 📊 Monitoring & Logs
 
-Logs include:
-- Request/response logging
-- Performance metrics (response times)
-- Error tracking
-- Cache hit/miss rates
-- Rate limit status
-
-Example log output:
-```
-[2025-11-16T10:30:00.000Z] [INFO] Server started successfully {"port":3000,"environment":"development"}
-[2025-11-16T10:30:05.123Z] [INFO] Incoming request {"method":"GET","path":"/api/tokens"}
-[2025-11-16T10:30:05.234Z] [DEBUG] DexScreener cache hit {"query":"SOL"}
-[2025-11-16T10:30:05.250Z] [DEBUG] Request completed {"method":"GET","path":"/api/tokens","duration":"127ms"}
-```
-
-## 🐛 Troubleshooting
-
-### Redis Connection Issues
-```bash
-# Check if Redis is running
-redis-cli ping
-# Should return: PONG
-
-# Check Redis connection
-redis-cli -h localhost -p 6379
-```
-
-### Port Already in Use
-```bash
-# Kill process using port 3000
-lsof -ti:3000 | xargs kill -9
-
-# Or change PORT in .env
-PORT=3001
-```
 
 ### TypeScript Errors
 ```bash
@@ -579,14 +518,6 @@ PORT=3001
 rm -rf dist/
 npm run build
 ```
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👥 Contributing
-
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## 🙏 Acknowledgments
 
