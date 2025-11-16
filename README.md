@@ -111,7 +111,7 @@ The server will start on `http://localhost:3000`
 
 ## 🎨 Demo Client
 
-A beautiful black-themed WebSocket client is available in the `/demo` folder:
+A modern black-themed WebSocket client is available in the `/demo` folder:
 
 ```bash
 # Open the demo client in your browser
@@ -119,11 +119,11 @@ open demo/test-client.html
 ```
 
 Features:
-- ✨ Real-time token price updates
-- 📊 Live volume spike notifications  
-- 🔍 Advanced sorting and filtering
-- 🎨 Modern dark UI with smooth animations
-- ⚡ Lightweight and responsive
+- Real-time token price updates
+- Live volume spike notifications  
+- Advanced sorting and filtering
+- Modern dark UI with smooth animations
+- Lightweight and responsive
 
 See [demo/README.md](./demo/README.md) for more details.
 
@@ -149,8 +149,6 @@ GET /api/tokens
 | `sortBy` | string | volume | Sort field: `volume`, `price_change`, `market_cap`, `liquidity` |
 | `order` | string | desc | Sort order: `asc`, `desc` |
 | `period` | string | 24h | Time period: `1h`, `24h`, `7d` |
-| `search` | string | - | Search by token name or ticker |
-| `minVolume` | number | 0 | Minimum volume filter (SOL) |
 
 **Example Request:**
 ```bash
@@ -422,39 +420,67 @@ Test coverage includes:
 - ✅ Cache functionality tests
 - ✅ Error handling tests
 
+### Performance Testing
+
+To demonstrate API performance with rapid calls:
+
+```bash
+# Make sure server is running first
+npm run dev
+
+# In another terminal, run performance test
+node performance-test.js
+```
+
+This will make 10 rapid API calls and show:
+- ✅ Individual response times for each endpoint
+- ✅ Average/min/max response times
+- ✅ Cache performance improvements
+- ✅ Success rate
+
+Expected results:
+- First call (cache miss): ~100-300ms
+- Cached calls: ~10-50ms (90%+ faster)
+- Average response time: <100ms
+
 ---
 
 ## 🏗️ Architecture & Design Decisions
 
 ### 1. Caching Strategy
-- **Two-level caching**: Individual API responses (15s TTL) and aggregated results (30s TTL)
-- **Cache keys pattern**: Organized by type (e.g., `dexscreener:search:`, `aggregated:token:`)
-- **Graceful degradation**: System continues working if Redis is unavailable
+- **Dual-layer caching**: API responses (configurable TTL, default 10s) and aggregated results (configurable TTL, default 10s)
+- **Cache key pattern**: Organized by source and type (e.g., `dexscreener:search:SOL`, `aggregated:popular`)
+- **Redis-backed**: Fast in-memory caching with automatic expiration
+- **Graceful degradation**: System continues working if Redis is unavailable (cache misses fallback to API)
 
 ### 2. Rate Limiting
-- **Exponential backoff**: Prevents API rate limit violations
-- **Per-API limiters**: Separate rate limiters for each external API
-- **Request queuing**: Queues requests when approaching rate limits
+- **Exponential backoff**: Prevents API rate limit violations with intelligent retry logic
+- **Per-API limiters**: Separate rate limiters for DexScreener (300/min) and Jupiter (600/min)
+- **Request queuing**: Queues requests when approaching limits to avoid 429 errors
+- **Automatic retry**: Failed requests automatically retry with increasing delays
 
-### 3. Token Deduplication
+### 3. Real-time Updates
+- **Cache-aligned polling**: WebSocket updates sync with cache refresh cycle (every 10-30s configurable)
+- **Change detection**: Compares current vs previous data to identify meaningful changes
+- **Smart broadcasting**: Only emits events for significant changes (price changes, volume spikes >20%)
+- **Efficient comparison**: Uses deep cloning to avoid reference equality issues
+
+### 4. Token Deduplication
 - **Address-based matching**: Primary key is token address (case-insensitive)
-- **Data merging**: Combines data from multiple sources, preferring most complete/recent
-- **Volume aggregation**: Sums volumes from different DEXs
-
-### 4. Real-time Updates
-- **Background polling**: Cron job fetches fresh data every 30 seconds
-- **Change detection**: Compares with previous data to identify updates
-- **Selective emissions**: Only emits events when significant changes occur (>1% price change, >50% volume spike)
+- **Multi-source merging**: Combines data from DexScreener and Jupiter, preferring most complete info
+- **Conflict resolution**: Uses latest/most reliable data when sources conflict
 
 ### 5. Error Handling
 - **Graceful failures**: API failures don't crash the server
-- **Automatic retries**: Failed requests are retried with backoff
-- **Consistent error format**: All errors follow the same structure
+- **Promise.allSettled**: Parallel API calls continue even if one fails
+- **Consistent error format**: All errors follow standard `{ success, error: { code, message } }` structure
+- **Error logging**: Comprehensive error tracking with context
 
 ### 6. Performance Optimizations
 - **Parallel API calls**: Multiple APIs fetched simultaneously using `Promise.allSettled`
-- **Connection pooling**: Reuses HTTP connections
-- **Efficient pagination**: Cursor-based pagination prevents re-scanning
+- **Connection pooling**: Reuses HTTP connections via axios keep-alive
+- **Cursor pagination**: Memory-efficient pagination that doesn't re-scan entire dataset
+- **Selective updates**: Only broadcasts tokens that actually changed
 
 ## 🚀 Deployment
 
