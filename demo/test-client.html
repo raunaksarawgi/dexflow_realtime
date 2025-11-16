@@ -345,8 +345,13 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3000/api';
-        const WS_URL = 'http://localhost:3000';
+        // Automatically detect if running locally or on deployed server
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const BASE_URL = isLocalhost ? 'http://localhost:3000' : window.location.origin;
+        const API_URL = `${BASE_URL}/api`;
+        const WS_URL = BASE_URL;
+        
+        console.log('🔗 Connecting to:', BASE_URL);
         const socket = io(WS_URL);
 
         // State management
