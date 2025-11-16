@@ -112,14 +112,9 @@ src/
 
 The server will start on `http://localhost:3000` 
 
-## 🎨 Demo Client
+## 🎨 UI
 
-A modern black-themed WebSocket client is available in the `/demo` folder:
-
-```bash
-# Open the demo client in your browser
-open demo/test-client.html
-```
+A modern black-themed WebSocket client:
 
 Features:
 - Real-time token price updates
@@ -128,7 +123,6 @@ Features:
 - Modern dark UI with smooth animations
 - Lightweight and responsive
 
-See [demo/README.md](./demo/README.md) for more details.
 
 ## 📚 API Documentation
 
@@ -423,6 +417,18 @@ Test coverage includes:
 - ✅ Cache functionality tests
 - ✅ Error handling tests
 
+### Postman Collection
+
+A comprehensive Postman collection (`postman_collection.json`) is included with **19 requests**:
+- ✅ **Successful requests** return `200` status codes with data
+- ✅ **Error test cases** return `400/404` status codes with error messages (expected behavior)
+- ✅ Includes custom token address testing for flexible validation
+
+**Import Instructions:**
+1. Open Postman → Click "Import" → Upload `postman_collection.json`
+2. Set `baseUrl` variable to `https://dexflow-realtime.onrender.com` (or `http://localhost:3000` for local)
+3. Run requests to test API functionality
+
 ### Performance Testing
 
 To demonstrate API performance with rapid calls:
@@ -451,7 +457,7 @@ Expected results:
 ## 🏗️ Architecture & Design Decisions
 
 ### 1. Caching Strategy
-- **Dual-layer caching**: API responses (configurable TTL, default 10s) and aggregated results (configurable TTL, default 10s)
+- **Dual-layer caching**: API responses (configurable TTL, default 30s) and aggregated results (configurable TTL, default 30s)
 - **Cache key pattern**: Organized by source and type (e.g., `dexscreener:search:SOL`, `aggregated:popular`)
 - **Redis-backed**: Fast in-memory caching with automatic expiration
 - **Graceful degradation**: System continues working if Redis is unavailable (cache misses fallback to API)
@@ -459,14 +465,12 @@ Expected results:
 ### 2. Rate Limiting
 - **Exponential backoff**: Prevents API rate limit violations with intelligent retry logic
 - **Per-API limiters**: Separate rate limiters for DexScreener (300/min) and Jupiter (600/min)
-- **Request queuing**: Queues requests when approaching limits to avoid 429 errors
-- **Automatic retry**: Failed requests automatically retry with increasing delays
+- **Request queuing**: Queues requests when approaching limits to avoid "429 errors"
 
 ### 3. Real-time Updates
 - **Cache-aligned polling**: WebSocket updates sync with cache refresh cycle (every 10-30s configurable)
 - **Change detection**: Compares current vs previous data to identify meaningful changes
 - **Smart broadcasting**: Only emits events for significant changes (price changes, volume spikes >20%)
-- **Efficient comparison**: Uses deep cloning to avoid reference equality issues
 
 ### 4. Token Deduplication
 - **Address-based matching**: Primary key is token address (case-insensitive)
@@ -485,18 +489,6 @@ Expected results:
 - **Cursor pagination**: Memory-efficient pagination that doesn't re-scan entire dataset
 - **Selective updates**: Only broadcasts tokens that actually changed
 
-## Deployment
-
-### Full Deployment Guide
-
-See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for:
-- ✅ Step-by-step Redis cloud setup (Upstash/Redis Cloud)
-- ✅ Complete Render deployment instructions
-- ✅ Railway deployment guide
-- ✅ Troubleshooting Redis connection issues
-- ✅ Production environment variables
-- ✅ Testing deployed app
-
 ## 🔒 Environment Variables
 
 | Variable | Description | Default |
@@ -505,7 +497,7 @@ See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for:
 | `PORT` | Server port | 3000 |
 | `REDIS_URL` | Redis connection URL | redis://localhost:6379 |
 | `CACHE_TTL` | Cache TTL in seconds | 30 |
-| `API_CACHE_TTL` | API cache TTL in seconds | 15 |
+| `API_CACHE_TTL` | API cache TTL in seconds | 30 |
 | `RATE_LIMIT_PER_MINUTE` | Max requests per minute | 300 |
 | `WS_UPDATE_INTERVAL` | WebSocket update interval (ms) | 30000 |
 | `CORS_ORIGIN` | CORS origin | * |
@@ -519,11 +511,4 @@ rm -rf dist/
 npm run build
 ```
 
-## 🙏 Acknowledgments
-
-- [DexScreener API](https://dexscreener.com/)
-- [Jupiter API](https://jup.ag/)
-
 ---
-
-Built with ❤️ by Raunak
