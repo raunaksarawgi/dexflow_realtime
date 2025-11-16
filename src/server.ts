@@ -69,8 +69,13 @@ class Server {
     // API routes
     this.app.use('/api', routes);
 
-    // Root endpoint
+    // Root endpoint - redirect to test client for demo
     this.app.get('/', (_req, res) => {
+      res.redirect('/demo/test-client.html');
+    });
+
+    // API info endpoint
+    this.app.get('/api', (_req, res) => {
       res.json({
         success: true,
         message: 'Real-time DEX Aggregator API',
@@ -81,7 +86,7 @@ class Server {
           token: '/api/tokens/:address',
           search: '/api/search?q=:query',
         },
-        testClient: '/test-client.html',
+        testClient: '/demo/test-client.html',
         documentation: 'See README.md for full API documentation',
         timestamp: Date.now(),
       });
